@@ -74,5 +74,5 @@ ACMD(kickall)
 }
 
 HPExport void plugin_init (void) {
-	addAtcommand("kickall",kickall);//link our '@sample' command
+	addAtcommand("kickall",kickall);
 }
