@@ -1,0 +1,134 @@
+//===== Samuel's Scripts ===================================== 
+//= Base and Job Level Up Event Script
+//===== By: ================================================== 
+//= Samuel
+//===== Current Version: ===================================== 
+//= 1.00
+//===== Compatible With: ===================================== 
+//= Hercules/rAthena SVN
+//===== Description: ========================================= 
+//= A customizable script for events to happen
+//= when a player levels up base/job
+//===== Comments: ============================================
+//= N/A
+//===== Additional Comments: =================================
+//= 1.00 Initial Release
+//===== Contact Info: =========================================
+//= [Samuel] 
+//= Email: johnsamuel_santos3@yahoo.com
+//============================================================
+-	script	LevelUpEvent	-1,{
+OnPCBaseLvUpEvent:
+OnPCJobLvUpEvent:
+	if (getgroupid() < .GMLevel) {
+		if (.Mode & 1) {
+			message strcharinfo(0),.Messages$[rand(1,getarraysize(.Messages$))];
+		}
+		if (.Mode & 2) {
+			for (set .@x,0; .@x < getarraysize(.BuffInfo); set .@x,.@x + 3){
+				sc_start .BuffInfo[.@x], .BuffInfo[.@x + 1] * 60000, .BuffInfo[.@x + 2];
+			}
+		}
+		if (.Mode & 4) {
+			for (set .@i,0; .@i < getarraysize(.SpecialEffects); .@i++) {
+				specialeffect2 .SpecialEffects[.@i],0;
+			}
+		}
+		if (.Mode << 16) {
+			if (.Mode & 16) {
+				for (.@i = 0; .@i < .Random; .@i++) {
+					do {
+						.@loc = rand(getarraysize(.Items));
+					} while (getitemname(.Items[.@loc]) == "null" || .@loc % 2 ) ; 
+					getitem .Items[.@loc],.Items[.@loc + 1];
+				}
+			}
+			else {
+				for (set .@i,0; .@i < getarraysize(.Items); set .@i, .@i+ 2) {
+					getitem .Items[.@i],.Items[.@i+1];
+				}
+			}
+		}
+		if (.Mode >> 64) {
+			if (.Mode & 64) {
+				.Zeny = rand(.minZeny,.maxZeny);
+				Zeny += .Zeny;
+				dispbottom "You have received "+.Zeny+"z.";
+			}
+			else {
+				Zeny += .Zeny;
+				dispbottom "You have received "+.Zeny+"z.";
+			}
+		}
+	}
+	end;
+
+OnInit:
+	// Settings
+	.ServerName$ = "NameofYourRO";
+	
+	// Bitwise
+	// [1]: Message [2]: Buffs
+	// [4]: Effects [8]: All of Item from the list
+	// [16]: Random Items from the list
+	// [32]: Zeny Indicated
+	// [64]: Random Zeny (min and max)
+	// Max: 127
+	// 1+2 = Message and Buffer on
+	// 1+4 = Message and Effects on
+	.Mode = 47;
+	
+	// GM Level
+	// Group id above this number is not included in this event
+	// Use 100 to disable (Note: GMs will also trigger this event)
+	.GMLevel = 100;
+	
+	// Messages that will show up in the char when he/she levels up.
+	// Words to encourage your players every time they level up.
+	// Just follow the format
+	setarray .Messages$[1]	,"Welcome to "+ .ServerName$ +"! Continue your adventure with us!"
+							,"Good job adventurer! Here's a simple reward for your hard work!"
+							,"The great angel of Rune Midgard will assist you in your adventure!"
+							,"Enjoy your stay here in "+ .ServerName$ +"! Be blessed!"
+							;
+	
+	// Each buff contains 3 variables
+	// <Type>,<Duration>,<Rate>, // Buff 1
+	// <Type>,<Duration>,<Rate>, // Buff 2
+	//   ...;
+	//
+	//  Example: 188,45,3
+	//    -Player gains +3 Str for 45 mins
+	//
+	//  Type is 188, which references which SC_ to use, SC_INCSTR in this example
+	//     -For a full list of SC_ visit the db/const.txt
+	setarray .BuffInfo	,30,45,10	// Level 10 Blessing for 45 mins
+						,32,45,10;	// Level 10 Increase Agi for 45 mins
+
+	// Special Effects
+	// -For a full list of SC_ visit the db/const.txt
+	setarray .SpecialEffects	,37		// Increase Agi,
+								,42		// Blessing
+								,582; 	// Angel
+
+	// Give Away Items
+	// <item_id>,<amount>
+	// You can add as many items as you want
+	setarray .Items		,501,1	// Red Potions 10
+						,502,5	// Orange Potion 10
+						,503,7	// Yellow Potion 10
+						,504,10	// White Potion 10
+						;
+	
+	// Random Items
+	// How Many Random Items shall be given?
+	.Random = 1;
+	
+	// Zeny
+	// Amount of Zeny to be given
+	.Zeny = 5000;
+	
+	// Random Zeny
+	.minZeny = 5000;
+	.maxZeny = 10000;
+}

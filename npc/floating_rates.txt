@@ -1,0 +1,219 @@
+//===== Hercules Script ======================================
+//= Floating Server Rates
+//===== By: ==================================================
+//= Samuel
+//===== Current Version: =====================================
+//= 1.0
+//===== Compatible With: =====================================
+//= Hercules
+//===== Description: =========================================
+//= This script will allow a gm with level specified in the script
+//= to change your server rates depending on how he sets it
+//= with starting day, starting time, ending day and ending time
+//= For now, it just supports base and job exp rates
+//===== Contact Info: =========================================
+//= [Samuel] 
+//= Email: johnsamuel_santos3@yahoo.com
+//============================================================
+
+prontera,149,193,4	script	Floating Rates	2_BOARD1,{
+	doevent "FloatingRates2::OnMenu";
+	end;
+}
+
+-	script	FloatingRates2	-1,{
+function Add_Zero;
+
+OnInit:
+
+	.GMAccess = 99;		// GM level required to access Schedule Manager.
+	setarray .Days$[0],"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday";
+	.ServerName$ = "ValkyrieRO";
+	set .Size, getarraysize($FLOATING_CONTROL);
+
+	//Original Rates
+	.brate = 500;	// Original Base Exp
+	.jrate = 500;	// Original Job Exp
+	setbattleflag("base_exp_rate",.brate);
+	setbattleflag("job_exp_rate",.jrate);
+	atcommand "@reloadmobdb";
+	.floating = 0;
+
+OnMinute00:
+	freeloop(1);
+	if (.floating) {
+		for(set .@i,0; .@i<.Size; set .@i,.@i+4)
+		if (gettime(WEEKDAY) == $FLOATING_CONTROL[.@i+1] && gettime(HOUR) == $FLOATING_CONTROL[.@i+3]) {
+			.brate = 500;	// Original Base Exp
+			.jrate = 500;	// Original Job Exp
+			setbattleflag("base_exp_rate",.brate);
+			setbattleflag("job_exp_rate",.jrate);
+			.floating = 0;
+			//we don't change card drops rate, because these values won't change them anyway
+			atcommand "@reloadmobdb";
+			announce "Floating Rates Ended.",bc_all,0xFF6060;
+			sleep 4000;
+			announce "Current "+ServerName$+" Rates: "+(.brate/100)+"x / "+(.jrate/100)+"x",bc_all,0xFF6060;
+			end;
+		}
+		else {
+			announce "Floating rates is Active: "+(.brate/100)+"x / "+(.jrate/100)+"x",bc_all,0xFF6060;
+			sleep 4000;
+			announce "Floating rates will last until "+.Days$[$FLOATING_CONTROL[.@i+1]]+" ("+Add_Zero($FLOATING_CONTROL[.@i+3])+")",bc_all,0xFF6060;
+			end;
+		}
+	}
+	if (!.floating) {
+		for(set .@i,0; .@i<.Size; set .@i,.@i+4)
+		if ((gettime(WEEKDAY) == $FLOATING_CONTROL[.@i] && gettime(HOUR) >= $FLOATING_CONTROL[.@i+2]) || (gettime(WEEKDAY) == $FLOATING_CONTROL[.@i+1] && gettime(HOUR) < $FLOATING_CONTROL[.@i+3])) {
+		.brate = ((getbattleflag("base_exp_rate")) * $FLOATING_CONTROL[.@i+4]);
+		.jrate = ((getbattleflag("job_exp_rate")) * $FLOATING_CONTROL[.@i+5]);
+		//Start Floating Rates
+		setbattleflag("base_exp_rate",.brate);
+		setbattleflag("job_exp_rate",.jrate);
+		.floating = 1;
+		//we don't change card drops rate, because these values won't change them anyway
+		atcommand "@reloadmobdb";
+		announce "Floating rates Activated: "+(.brate/100)+"x / "+(.jrate/100)+"x",bc_all,0xFF6060;
+		sleep 1000;
+		announce "Floating rates will last until "+.Days$[$FLOATING_CONTROL[.@i+1]]+" ("+Add_Zero($FLOATING_CONTROL[.@i+3])+")",bc_all,0xFF6060;
+		end;
+		}
+	}
+	end;
+
+function Add_Zero {
+	return ((getarg(0)<10)?"0":"")+getarg(0)+(getarg(1,0)?".":":")+"00";
+}
+
+OnMenu:
+	while(1) {
+	mes "[Floating Rates Information]";
+	next;
+	switch(select(""+((getgmlevel()<.GMAccess || !getgmlevel())?"":" ~ Manage schedules...")+": ~ ^777777Cancel^000000")) {
+	case 1:
+	while(1) {
+		mes "[Schedule Manager]";
+		mes "There are ^0055FF"+(.Size/6)+" schedule(s)^000000 configured.";
+		mes "What would you like to do?";
+		next;
+		switch(select("Add a schedule:Delete a schedule:Reload settings: ~ ^777777Go back^000000")) {
+		case 1:
+			mes "[New Schedule]";
+			mes "Select a starting day.";
+			next;
+			set .@daystart, select(" ~ "+implode(.Days$,": ~ "))-1;
+			mes "[New Schedule]";
+			mes "Select a start time for ^0055FF"+.Days$[.@daystart]+"^000000.";
+			next;
+			set .@menu$,"";
+			for(set .@i,0; .@i<23; set .@i,.@i+1)
+				set .@menu$, .@menu$+" ~ "+Add_Zero(.@i,1)+":";
+			set .@timestart, select(.@menu$)-1;
+			mes "[New Schedule]";
+			mes "Select an ending day.";
+			next;
+			set .@dayend, select(" ~ "+implode(.Days$,": ~ "))-1;
+			mes "Select an end time for ^0055FF"+.Days$[.@dayend]+"^000000.";
+			next;
+			set .@menu$,"";
+			for(set .@i,0; .@i<24; set.@i,.@i+1)
+				set .@menu$, .@menu$+" ~ "+Add_Zero(.@i,1)+":";
+			set .@timeend, select(.@menu$)-1;
+			mes "[New Schedule]";
+			mes "Input Base Multiplier";
+			input .@bmultiplier;
+			next;
+			mes "[New Schedule]";
+			mes "Input Job Mulitplier";
+			input .@jmultiplier;
+			next;
+			for(set .@i,0; .@i<.Size; set .@i,.@i+6)
+				if (.@daystart == $FLOATING_CONTROL[.@i] &&
+					((.@timestart >= $FLOATING_CONTROL[.@i+2] && .@timestart < $FLOATING_CONTROL[.@i+3]) ||
+					 (.@timeend > $FLOATING_CONTROL[.@i+2] && .@timeend <= $FLOATING_CONTROL[.@i+3]) ||
+					 (.@timestart <= $FLOATING_CONTROL[.@i+2] && .@timeend >= $FLOATING_CONTROL[.@i+3])) ||
+					 (.@daystart == .dayend && .@timestart == .@timeend)
+					) {
+					mes "[New Schedule]";
+					mes "The chosen times overlap with an existing schedule.";
+					next;
+					set .@d,1;
+					break;
+				}
+			if (.@d) { set .@d,0; break; }
+					mes "[New Schedule]";
+					mes "Are you sure?";
+					next;
+					switch(select(" ~ ^0055FFAdd schedule...^000000: ~ ^777777Cancel^000000")) {
+					case 1:
+						for(set .@i,0; .@i<.Size; set .@i,.@i+6)
+							if ((.@daystart == $FLOATING_CONTROL[.@i] && .@timeend <= $FLOATING_CONTROL[.@i+3]) || .@dayend < $FLOATING_CONTROL[.@i+1]) {
+								set .@d,1;
+								break;
+							}
+						if (!.@d) { set .@d,1; set .@i,.Size; }
+						copyarray $FLOATING_CONTROL[.@i+6], $FLOATING_CONTROL[.@i], .Size-.@i;
+						setarray $FLOATING_CONTROL[.@i], .@daystart, .@dayend, .@timestart, .@timeend, .@bmultiplier, .@jmultiplier;
+						set .Size, getarraysize($FLOATING_CONTROL);
+					case 2:
+						mes "[New Schedule]";
+						mes ((.@d)?"Schedule added.":"Cancelled.");
+						next;
+						set .@d,1;
+					}
+					if (.@d) { set .@d,0; break; }
+			break;
+		case 2:
+			mes "[Remove Schedule]";
+			if (!.Size) {
+				mes "There are no schedule configured.";
+				next;
+				break;
+			}
+			mes "Select a schedule to remove.";
+			next;
+			set .@menu$,"";
+			for(set .@i,0; .@i<.Size; set .@i,.@i+6)
+				set .@menu$, .@menu$+" ~ "+.Days$[$FLOATING_CONTROL[.@i]]+" ("+Add_Zero($FLOATING_CONTROL[.@i+2],1)+") - "+.Days$[$FLOATING_CONTROL[.@i+1]]+"("+Add_Zero($FLOATING_CONTROL[.@i+3],1)+"):";
+			set .@menu$, .@menu$+" ~ ^777777Cancel^000000";
+			set .@i, select(.@menu$)-1;
+			if (.@i == (.Size/6)) break;
+			mes "[Remove Schedule]";
+			mes "Delete ^0055FF"+.Days$[$FLOATING_CONTROL[.@i*6]]+"'s^000000 schedule?";
+			mes "This action cannot be undone.";
+			next;
+			set .@j, select(" ~ ^FF0000Delete schedule...^000000: ~ ^777777Cancel^000000");
+			mes "[Remove Schedule]";
+			if (.@j == 2)
+				mes "Cancelled.";
+			else {
+				deletearray $FLOATING_CONTROL[.@i*6],6;
+				set .Size, getarraysize($FLOATING_CONTROL);
+				mes "Schedule deleted.";
+			}
+			next;
+			break;
+		case 3:
+			mes "[Reload Settings]";
+			mes "This will trigger all events related to new schedule configurations, if any.";
+			next;
+			set .@i, select(" ~ ^0055FFReload settings...^000000: ~ ^777777Cancel^000000");
+			mes "[Reload Settings]";
+			if (.@i == 2) mes "Cancelled.";
+			else {
+				set .Init,1;
+				donpcevent "FloatingRates2::OnInit";
+				mes "Variables have been re-initialized.";
+			}
+			next;
+			break;
+		case 4:
+			set .@d,1; break;
+		}
+		if (.@d) { set .@d,0; break; }
+		} break;
+	case 2:
+		close;
+	} }
+}

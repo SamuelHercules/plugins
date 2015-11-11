@@ -1,3 +1,8 @@
 // Restock System
 // Enable to use @restock in pvp,gvg,bg maps?
 enable_pvp_map: no
+
+// Restock System
+// Restock Fee: Amount of Zeny to be paid for every restock
+// 0 = disable; Max Value = Max Zeny in mmo.h
+restock_fee: 1000

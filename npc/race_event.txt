@@ -1,0 +1,92 @@
+//===== Samuel's Scripts ===================================== 
+//= Race Event Script
+//===== By: ================================================== 
+//= Samuel
+//===== Current Version: ===================================== 
+//= 1.00
+//===== Compatible With: ===================================== 
+//= Hercules/rAthena SVN
+//===== Description: ========================================= 
+//= A customizable script for race event
+//= when a player reaches max level in your server
+//===== Comments: ============================================
+//= N/A
+//===== Additional Comments: =================================
+//= 1.00 Initial Release
+//===== Contact Info: =========================================
+//= [Samuel] 
+//= Email: johnsamuel_santos3@yahoo.com
+//============================================================
+/*
+CREATE TABLE IF NOT EXISTS `race_event` (
+ `account_id` int(11) unsigned NOT NULL default '0',
+ `char_id` int(11) unsigned NOT NULL,
+ `name` varchar(30) NOT NULL DEFAULT '',
+ `class` varchar(30) NOT NULL DEFAULT '',
+ `time` varchar(255) NOT NULL DEFAULT '',
+ PRIMARY KEY (`char_id`,`account_id`),
+ KEY `char_id` (`char_id`)
+) ENGINE=MyISAM;
+
+*/
+prontera,156,195,4	script	Race Event NPC	4_F_KAFRA7,{
+	mes "Hello "+strcharinfo(0)+"!";
+	mes "Here are the players who won in the race event";
+	 mes "^0000FFName^000000 | ^FF0000Job^000000 | ^FF22FFDate^000000";
+	query_sql ("SELECT `name`,`class`,`time` FROM `race_event` ORDER BY `time` ASC", .@charname$, .@jobclass$, .@racetime$);
+	for (.@i = 0; .@i < getarraysize(.@charname$); .@i++) {
+		mes .@i+1+". ^0000FF"+.@charname$[.@i]+"^000000 ^FF0000"+.@jobclass$[.@i]+"^000000 ^FF22FF" +.@racetime$[.@i]+ "^000000 ";
+	}
+	close;
+	
+OnPCBaseLvUpEvent:
+	if (getgroupid() < .GMLevel) {
+		if( BaseLevel == .MaxLevel ) {
+		@time$ = gettimestr("%Y-%m-%d %H:%M:%S",21);
+		@job$ = jobname(Class);
+			if (.Mode) {
+				query_sql ("SELECT `char_id` FROM `race_event` WHERE `char_id` ='"+getcharid(0)+"'",.@charids);
+				if (!.@charids) {
+					query_sql ("INSERT INTO `race_event`(`account_id`,`char_id`,`name`,`class`,`time`) VALUES ('"+getcharid(3)+"','"+getcharid(0)+"','"+escape_sql(strcharinfo(0))+"','"+escape_sql(@job$)+"','"+escape_sql(@time$)+"')");
+					message strcharinfo(0),"Congratulations! You have won in the race event!";
+					if (.Announce) announce "Congratulations to "+strcharinfo(0)+" for reaching the max level and winning in Race Event!",bc_all;
+				}
+			}
+			if (.Mode == 2) {
+				query_sql ("SELECT `class` FROM `race_event` WHERE `class` ='"+escape_sql(@job$)+"'",.@jobexists$);
+				if (.@jobexists$ == "" || .@jobexists$ == "null" ) {
+					query_sql ("SELECT `char_id` FROM `race_event` WHERE `char_id` ='"+getcharid(0)+"'",.@charids);
+					if (!.@charids) {
+						query_sql ("INSERT INTO `race_event`(`account_id`,`char_id`,`name`,`class`,`time`) VALUES ('"+getcharid(3)+"','"+getcharid(0)+"','"+escape_sql(strcharinfo(0))+"','"+escape_sql(@job$)+"','"+escape_sql(@time$)+"')");
+						message strcharinfo(0),"Congratulations! You have won in the race event!";
+						if (.Announce) announce "Congratulations to "+strcharinfo(0)+" for reaching the max level and winning in Race Event!",bc_all;
+					}
+				}
+			}
+		}
+	}
+	end;
+	
+OnInit:
+	//Settings
+	// Max Level
+	// Set to the Max Level in your Server
+	.MaxLevel = 99;
+	
+	// GM Level
+	// Group id above this number is not included in this event
+	// Use 100 to disable (Note: GMs will also trigger this event)
+	.GMLevel = 100;
+	
+	// Race System
+	// [1]: For All
+	// [2]: For Each Job
+	.Mode = 1;
+	
+	// Announce System
+	// Should we announce?
+	// [1]: on [0]: off
+	.Announce = 1;
+	
+	end;
+}
