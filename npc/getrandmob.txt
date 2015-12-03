@@ -1,0 +1,4 @@
+prontera,154,165,4	script	randommob	1002,{
+	mes "Random Mob:"+getrandmob 0,1+".";
+	close;
+}
