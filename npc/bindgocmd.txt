@@ -8,6 +8,8 @@
 //= Hercules
 //===== Description: =========================================
 //= This script will allow to customize @go lists via script
+//= Automatically re-arrange ID's and re-creates @go list via
+//= arrangement of town list
 //===== Credits: =============================================
 //= jTynne
 //= https://rathena.org/board/topic/96165-go-bind-script/
