@@ -8,6 +8,9 @@
 //= Hercules
 //===== Description: =========================================
 //= This script will allow to customize @go lists via script
+//===== Credits: =============================================
+//= jTynne
+//= https://rathena.org/board/topic/96165-go-bind-script/
 //===== Contact Info: ========================================
 //= [Samuel] 
 //= Email: johnsamuel_santos3@yahoo.com
