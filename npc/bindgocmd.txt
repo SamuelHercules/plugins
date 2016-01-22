@@ -1,0 +1,109 @@
+//===== Hercules Script ======================================
+//= Bind @go command
+//===== By: ==================================================
+//= Samuel
+//===== Current Version: =====================================
+//= 1.0
+//===== Compatible With: =====================================
+//= Hercules
+//===== Description: =========================================
+//= This script will allow to customize @go lists via script
+//===== Contact Info: ========================================
+//= [Samuel] 
+//= Email: johnsamuel_santos3@yahoo.com
+//============================================================
+-	script	bindgocmd	FAKE_NPC,{
+OnInit:
+	function AddTown;
+
+	bindatcmd "go","bindgocmd::OnCommand",0,99;
+
+	// Settings
+	.ServerName$ = "[YourRO]";
+
+	if(.townsloaded==1) end;
+	set .townsloaded, 1;
+
+	//AddTown("mapname",coordinate-x,coordinate-y,baselevel,gmlevel)
+	AddTown("prontera",155,183,0,0);
+	AddTown("morocc",156,93,100,0);
+	AddTown("geffen",119,59,0,100);
+	AddTown("payon",179,100,0,0);
+	AddTown("alberta",28,234,0,0);
+	AddTown((RENEWAL?"izlude":"oldizlude"),128,(RENEWAL?146:114),0,0);
+	AddTown("aldebaran",140,131,0,0);
+	AddTown("xmas",147,134,0,0);
+	AddTown("comodo",209,143,0,0);
+	AddTown("yuno",157,51,0,0);
+	AddTown("amatsu",198,84,0,0);
+	AddTown("gonryun",160,120,0,0);
+	AddTown("umbala",97,153,0,0);
+	AddTown("niflheim",202,174,0,0);
+	AddTown("louyang",217,100,0,0);
+	AddTown("new_1-1",53,111,0,10);	// GM group ID 10 or above can enter
+	AddTown("sec_pri",23,61,0,10);	// GM group ID 10 or above can enter
+	AddTown("jawaii",251,132,0,0);
+	AddTown("ayothaya",208,166,0,0);
+	AddTown("einbroch",64,200,0,0);
+	AddTown("lighthalzen",158,92,0,0);
+	AddTown("einbech",63,35,0,0);
+	AddTown("hugel",96,145,0,0);
+	AddTown("rachel",130,110,0,0);
+	AddTown("veins",216,123,0,0);
+	AddTown("moscovia",223,184,0,0);
+	AddTown("mid_camp",210,288,0,0);
+	AddTown("manuk",282,138,0,0);
+	AddTown("splendide",201,147,0,0);
+	AddTown("brasilis",196,217,0,0);
+	AddTown("dicastes01",198,187,0,0);
+	AddTown("mora",55,146,0,0);
+	AddTown("dewata",200,180,0,0);
+	AddTown("malangdo",140,114,0,0);
+	AddTown("malaya",231,200,0,0);
+	AddTown("ecl_in01",48,53,0,0);
+
+	end;
+
+OnCommand:
+	if (.@atcmd_parameters$[0] == "") {
+		callsub Usage;
+	}
+	for (.@i = 0; .@i <= .towncount-1; ++.@i) {
+		if ( (compare(""+.@i+"",.@atcmd_parameters$[0])) || (compare(""+ getd("." +(.@i)+"_map$")+"" , .@atcmd_parameters$[0]) ) ){
+			@map$ = ""+getd("." +(.@i)+"_map$")+"";
+			@mapx = getd("." +(.@i)+"_mapx");
+			@mapy = getd("." +(.@i)+"_mapy");
+			@maplvl = getd("." +(.@i)+"_maplvl");
+			@mapgm = getd("." +(.@i)+"_mapgm");
+			callsub Process,@map$,@mapx,@mapy,@maplvl,@mapgm;
+			end;
+		}
+	}
+	callsub Usage;
+	end;
+
+Usage:
+	dispbottom "Params: <city name|number>\n" "Warps you to a city.\n",C_LIME;
+	for (.@i = 0; .@i <= (.towncount/2); ++.@i) {
+		.@format$ = "  %d: %s                              %s";
+		dispbottom(sprintf(.@format$, .@i, getd("." +(.@i)+"_map$"),   ((getd("." +(.@i+(.towncount/2)+1)+"_id$")?""+(.@i+(.towncount/2)+1)+": "+getd("." +(.@i+(.towncount/2)+1)+"_map$")+"" : "")))),C_LIME;
+	}
+	end;
+
+Process:
+	if(BaseLevel < getarg(3)) { dispbottom .ServerName$+" : You need to be at least base level "+getarg(3)+" or higher to teleport to this location."; end;}
+	if(getgroupid() < getarg(4)) { dispbottom .ServerName$+" : This map cannot be accessed by your group/account level."; end;}
+	warp getarg(0),getarg(1),getarg(2);
+
+function AddTown {
+	++.towncount;
+	setd ("." +(.towncount-1)+"_id$", ""+.towncount+"");
+	setd ("." +(.towncount-1)+"_map$", getarg(0));
+	setd ("." +(.towncount-1)+"_mapx", getarg(1));
+	setd ("." +(.towncount-1)+"_mapy", getarg(2));
+	setd ("." +(.towncount-1)+"_maplvl", getarg(3));
+	setd ("." +(.towncount-1)+"_mapgm", getarg(4));
+	return;
+}
+end;
+}
