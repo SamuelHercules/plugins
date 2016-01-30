@@ -1,0 +1,173 @@
+//===== Samuel's Scripts ===================================== 
+//= Healer/Buffer/Identifier/Repair Script
+//===== By: ================================================== 
+//= Samuel
+//===== Current Version: ===================================== 
+//= 1.00
+//===== Compatible With: ===================================== 
+//= Hercules/rAthena SVN
+//===== Description: ========================================= 
+//= A customizable script that includes 4 NPC's in ONE
+//= Heal, Buffer, Identifier and Repair
+//===== Comments: ============================================
+//= N/A
+//===== Additional Comments: =================================
+//= 1.00 Initial Release
+//===== Contact Info: ========================================
+//= [Samuel] 
+//= Email: johnsamuel_santos3@yahoo.com
+//============================================================
+-	script	Healer#sam	FAKE_NPC,{
+
+	if (@healdelay > gettimetick(2)) {
+		if ( ( @healdelay - gettimetick(2)) > 60 ) {
+			message strcharinfo(0), ( (@healdelay - gettimetick(2)) / 60 )+" min(s) "+ ( (@healdelay - gettimetick(2)) - 60 ) + " sec(s) before you can use the healer again.";
+		}
+		else {
+			message strcharinfo(0), ( @healdelay - gettimetick(2) )+" sec(s) before you can use the healer again.";
+		}
+		end;
+	}
+	if (.healprice) {
+		message strcharinfo(0),"Healing costs "+(.healprice >= 1000 ?callfunc("F_InsertComma",.healprice,3,","):.healprice)+" Zeny.";
+		if (Zeny < .healprice) {
+			message strcharinfo(0),"You don't have enough zeny to heal.";
+			end;
+		}
+		if(select("^0055FFHeal^000000:^777777Cancel^000000") == 2) close;
+		Zeny -= .healprice;
+	}
+	specialeffect2 EF_HEAL2; percentheal 100,100;
+
+	if (.healbuffs) {
+		freeloop(1);
+		for (.@i = 0; .@i < getarraysize (.Bufflist); .@i = .@i + 5) {
+			if ( .Bufflist[.@i+4] ) {
+				if (.Bufflist[.@i+3]) {
+					specialeffect2 .Bufflist[.@i+3];
+				}
+				sc_start .Bufflist[.@i], .Bufflist[.@i + 1] * 60000,.Bufflist[.@i+2];
+			}
+		}
+		freeloop(0);
+	}
+
+	if (.identify) {
+		getinventorylist;
+		freeloop(1);
+		for( set .@i,0; .@i < @inventorylist_count; ++.@i ) {
+			if (!@inventorylist_identify[.@i]) { ++@unidentified; }
+		}
+		freeloop(0);
+		if (@unidentified) {
+			if (.identifyprice) {
+				message strcharinfo(0),"Identify costs "+(.identifyprice >= 1000 ?callfunc("F_InsertComma",.identifyprice,3,","):.identifyprice)+" Zeny for each items.";
+			if(select("^0055FFIdentify^000000:^777777Cancel^000000") == 2) close; }
+		}
+		freeloop(1);
+		for( set .@i,0; .@i < @inventorylist_count; ++.@i ) {
+			if (@inventorylist_identify[.@i]) continue;
+			if (countitem(611)) { // Magnifier
+				delitem 611,1;
+			}
+			else {
+			if (.identifyprice) {
+				if (Zeny < .identifyprice) {
+					message strcharinfo(0),"You don't have enough zeny to identify items.";
+					break;
+				}
+				Zeny -= .identifyprice;
+			}
+			}
+			delitem2 @inventorylist_id[.@i],@inventorylist_amount[.@i],0,0,0,0,0,0,0;
+			getitem @inventorylist_id[.@i],@inventorylist_amount[.@i];
+		}
+		freeloop(0);
+		@unidentified = 0;
+	}
+
+	if (.repair) {
+		if (getbrokencount() >= 1) {
+			if (.repairprice) {
+				@repairprice = .repairprice * getbrokencount();
+				message strcharinfo(0),"Repair costs "+(@repairprice >= 1000 ?callfunc("F_InsertComma",@repairprice,3,","):@repairprice)+" Zeny for "+getbrokencount()+" broken items.";
+			if (Zeny < @repairprice) {
+				message strcharinfo(0),"You don't have enough zeny to repair items.";
+				close;
+				end;
+			}
+			if(select("^0055FFRepair^000000:^777777Cancel^000000") == 2) close;
+			Zeny -= @repairprice;
+			}
+		repairall;
+		}
+	}
+
+	if (.healdelay) @healdelay = gettimetick(2)+.healdelay;
+	close;
+	end;
+
+OnInit:
+	.healprice = 0;	// Required Zeny to heal
+	.healbuffs = 1;	// Enable additional buffs listed in the Bufflist (1: yes / 0: no)
+	.healdelay = 0;	// Delay to use healer in seconds
+	.identify = 1;	// Enable auto identify
+	.identifyprice = 40;	// Zeny to deduct for identifying items
+	.repair = 1;	// Enable auto repair of broken items
+	.repairprice = 0;	// Zeny to deduct for repairing broken items
+
+	// Each buff contains 5 variables
+	// <Type>,<Duration>,<Rate>,<Effect>,<ON/OFF>, // Buff 1
+	// <Type>,<Duration>,<Rate>,<Effect>,<ON/OFF>, // Buff 2
+	//   ...;
+	//
+	//  Example: SC_INC_AGI,30,10,EF_INCAGILITY,1,
+	//    -Turns ON Healer to give player Level 10 Increase Agi for 30 mins with EF_INCAGILITY as effect
+	//    -For a full list of SC_ and EF_ check db/const.conf
+	setarray .Bufflist[0],SC_INC_AGI,30,10,EF_INCAGILITY,1,
+						SC_BLESSING,30,10,0,1;
+
+	end;
+}
+
+// Duplicates
+//============================================================
+alberta,25,240,6	duplicate(Healer#sam)	Healer#alb	4_F_FAIRY
+aldebaran,135,118,6	duplicate(Healer#sam)	Healer#alde	4_F_FAIRY
+amatsu,200,79,4	duplicate(Healer#sam)	Healer#ama	4_F_FAIRY
+ayothaya,207,169,6	duplicate(Healer#sam)	Healer#ayo	4_F_FAIRY
+comodo,184,158,6	duplicate(Healer#sam)	Healer#com	4_F_FAIRY
+einbech,57,36,6	duplicate(Healer#sam)	Healer#einbe	4_F_FAIRY
+einbroch,57,202,6	duplicate(Healer#sam)	Healer#einbr	4_F_FAIRY
+geffen,115,72,6	duplicate(Healer#sam)	Healer#gef	4_F_FAIRY
+gonryun,156,122,6	duplicate(Healer#sam)	Healer#gon	4_F_FAIRY
+hugel,89,150,6	duplicate(Healer#sam)	Healer#hug	4_F_FAIRY
+izlude,125,118,5	duplicate(Healer#sam)	Healer#izl	4_F_FAIRY
+jawaii,250,139,4	duplicate(Healer#sam)	Healer#jaw	4_F_FAIRY
+lighthalzen,152,100,6	duplicate(Healer#sam)	Healer#lhz	4_F_FAIRY
+louyang,226,103,4	duplicate(Healer#sam)	Healer#lou	4_F_FAIRY
+manuk,272,144,6	duplicate(Healer#sam)	Healer#man	4_F_FAIRY
+mid_camp,203,289,6	duplicate(Healer#sam)	Healer#mid	4_F_FAIRY
+moc_ruins,72,164,4	duplicate(Healer#sam)	Healer#moc	4_F_FAIRY
+morocc,153,97,6	duplicate(Healer#sam)	Healer#mor	4_F_FAIRY
+moscovia,220,191,4	duplicate(Healer#sam)	Healer#mos	4_F_FAIRY
+niflheim,212,182,5	duplicate(Healer#sam)	Healer#nif	4_F_FAIRY
+payon,179,106,4	duplicate(Healer#sam)	Healer#pay	4_F_FAIRY
+prontera,162,193,4	duplicate(Healer#sam)	Healer#prt	4_F_FAIRY
+rachel,125,116,6	duplicate(Healer#sam)	Healer#rac	4_F_FAIRY
+splendide,201,153,4	duplicate(Healer#sam)	Healer#spl	4_F_FAIRY
+thor_camp,249,74,4	duplicate(Healer#sam)	Healer#thor	4_F_FAIRY
+umbala,105,148,3	duplicate(Healer#sam)	Healer#umb	4_F_FAIRY
+veins,217,121,4	duplicate(Healer#sam)	Healer#ve	4_F_FAIRY
+xmas,143,136,4	duplicate(Healer#sam)	Healer#xmas	4_F_FAIRY
+yuno,164,45,4	duplicate(Healer#sam)	Healer#yuno	4_F_FAIRY
+
+// Duplicates (Renewal)
+//============================================================
+brasilis,194,221,6	duplicate(Healer#sam)	Healer#bra	4_F_FAIRY
+dewata,195,187,4	duplicate(Healer#sam)	Healer#dew	4_F_FAIRY
+dicastes01,201,194,4	duplicate(Healer#sam)	Healer#dic	4_F_FAIRY
+ecl_in01,45,60,4	duplicate(Healer#sam)	Healer#ecl	4_F_FAIRY
+malangdo,132,114,6	duplicate(Healer#sam)	Healer#mal	4_F_FAIRY
+malaya,205,205,6	duplicate(Healer#sam)	Healer#ma	4_F_FAIRY
+mora,55,152,4	duplicate(Healer#sam)	Healer#mora	4_F_FAIRY
