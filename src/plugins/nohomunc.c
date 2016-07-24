@@ -46,7 +46,6 @@ void npc_parse_unknown_mapflag_pre(const char **name, const char **w3, const cha
 {
 	if (!strcmp(*w3,"nohomunc")) {
 		int16 m = map->mapname2mapid(*name);
-		int fixedaspd = atoi(*w4);
 		struct mapflag_data *mf;
 		if (!( mf = getFromMAPD(&map->list[m], 0))) {
 			CREATE(mf, struct mapflag_data, 1);

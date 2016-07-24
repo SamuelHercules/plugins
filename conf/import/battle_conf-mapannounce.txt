@@ -1,0 +1,6 @@
+// [Cydh]
+// Self announce map description to player when map is changed.
+// Set the default color and font size here.
+// You can change the color for each map on db/map_desc.txt
+map_announce_color: 0xFFFF00
+map_announce_fontsize: 32
